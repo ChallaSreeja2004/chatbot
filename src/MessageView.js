@@ -57,6 +57,7 @@ export const MessageView = ({ chatId }) => {
 
     try {
       // Step 1: Save the user's message. The subscription will see this and update the UI.
+      console.log('--- DEBUG: handleSubmit is called with chatId:', chatId);
       await insertUserMessage({
         variables: {
           chat_id: chatId,
