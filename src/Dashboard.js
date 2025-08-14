@@ -1,4 +1,3 @@
-// src/Dashboard.js
 import { useState } from 'react';
 import { useSignOut, useUserData } from '@nhost/react';
 import { ChatList } from './ChatList';
@@ -8,6 +7,12 @@ export const Dashboard = () => {
   const { signOut } = useSignOut();
   const user = useUserData();
   const [selectedChatId, setSelectedChatId] = useState(null);
+
+  const handleSelectChat = (chatId) => {
+    if (chatId) {
+      setSelectedChatId(String(chatId)); // ensure always string
+    }
+  };
 
   return (
     <div
@@ -45,10 +50,10 @@ export const Dashboard = () => {
             overflowY: 'auto'
           }}
         >
-          <ChatList onSelectChat={setSelectedChatId} />
+          <ChatList onSelectChat={handleSelectChat} />
         </div>
         <div style={{ flex: 1, paddingLeft: '10px' }}>
-          {selectedChatId ? (
+          {selectedChatId && typeof selectedChatId === 'string' ? (
             <MessageView chatId={selectedChatId} />
           ) : (
             <h3>Select a chat to start messaging</h3>
