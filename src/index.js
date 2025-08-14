@@ -2,7 +2,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { NhostProvider, useAuthenticationStatus } from '@nhost/react';
-import { ApolloProvider, ApolloClient, createHttpLink, InMemoryCache, split } from '@apollo/client';
+import {
+  ApolloProvider,
+  ApolloClient,
+  createHttpLink,
+  InMemoryCache,
+  split
+} from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { WebSocketLink } from '@apollo/client/link/ws';
@@ -11,24 +17,26 @@ import { nhost } from './nhost';
 import App from './App';
 
 const Main = () => {
+  // This hook ensures we don't render the app until Nhost auth is ready
   const { isLoading } = useAuthenticationStatus();
 
   if (isLoading) {
     return <div>Loading authentication...</div>;
   }
 
+  // Set up Apollo Client *after* we know the auth state is loaded
   const authLink = setContext((_, { headers }) => {
     const accessToken = nhost.auth.getAccessToken();
     return {
       headers: {
         ...headers,
-        authorization: accessToken ? `Bearer ${accessToken}` : '',
+        authorization: accessToken ? `Bearer ${accessToken}` : ''
       }
     };
   });
 
   const httpLink = createHttpLink({
-    uri: nhost.graphql.httpUrl,
+    uri: nhost.graphql.httpUrl
   });
 
   const wsLink = new WebSocketLink({
@@ -53,7 +61,7 @@ const Main = () => {
       );
     },
     wsLink,
-    authLink.concat(httpLink),
+    authLink.concat(httpLink)
   );
 
   const apolloClient = new ApolloClient({
