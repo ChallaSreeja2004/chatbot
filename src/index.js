@@ -1,17 +1,78 @@
+// src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import { NhostProvider, useAuthenticationStatus } from '@nhost/react';
+import { ApolloProvider, ApolloClient, createHttpLink, InMemoryCache, split } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { WebSocketLink } from '@apollo/client/link/ws';
+
+import { nhost } from './nhost';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+
+const Main = () => {
+  const { isLoading } = useAuthenticationStatus();
+
+  if (isLoading) {
+    return <div>Loading authentication...</div>;
+  }
+
+  const authLink = setContext((_, { headers }) => {
+    const accessToken = nhost.auth.getAccessToken();
+    return {
+      headers: {
+        ...headers,
+        authorization: accessToken ? `Bearer ${accessToken}` : '',
+      }
+    };
+  });
+
+  const httpLink = createHttpLink({
+    uri: nhost.graphql.httpUrl,
+  });
+
+  const wsLink = new WebSocketLink({
+    uri: nhost.graphql.wsUrl,
+    options: {
+      reconnect: true,
+      lazy: true,
+      connectionParams: () => ({
+        headers: {
+          Authorization: `Bearer ${nhost.auth.getAccessToken()}`
+        }
+      })
+    }
+  });
+
+  const splitLink = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return (
+        definition.kind === 'OperationDefinition' &&
+        definition.operation === 'subscription'
+      );
+    },
+    wsLink,
+    authLink.concat(httpLink),
+  );
+
+  const apolloClient = new ApolloClient({
+    link: splitLink,
+    cache: new InMemoryCache()
+  });
+
+  return (
+    <ApolloProvider client={apolloClient}>
+      <App />
+    </ApolloProvider>
+  );
+};
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <NhostProvider nhost={nhost}>
+      <Main />
+    </NhostProvider>
   </React.StrictMode>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
