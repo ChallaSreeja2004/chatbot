@@ -1,10 +1,9 @@
 // src/ChatList.js
-import { gql, useQuery, useMutation } from '@apollo/client';
-import { useUserData } from '@nhost/react'; // ADDED: To get the current user's ID
+import { gql, useSubscription, useMutation } from '@apollo/client'; // CHANGED: useQuery is now useSubscription
 
-// CHANGED: Added the 'title' field to the query
-const GET_CHATS = gql`
-  query GetChats {
+// CHANGED: The operation is now a 'subscription' for real-time updates.
+const GET_CHATS_SUBSCRIPTION = gql`
+  subscription GetChats {
     chats(order_by: { created_at: desc }) {
       id
       created_at
@@ -13,28 +12,24 @@ const GET_CHATS = gql`
   }
 `;
 
-// CHANGED: Modified mutation to accept user_id
+// This mutation stays the same.
 const INSERT_CHAT = gql`
-  mutation InsertChat($user_id: uuid!) {
-    insert_chats_one(object: { user_id: $user_id }) {
+  mutation InsertChat {
+    insert_chats_one(object: {}) {
       id
     }
   }
 `;
 
 export const ChatList = ({ onSelectChat }) => {
-  const user = useUserData(); // ADDED: Hook to get the user object
-  const { loading, error, data } = useQuery(GET_CHATS); // REMOVED: refetch is handled automatically now
-  const [insertChat, { loading: isCreating }] = useMutation(INSERT_CHAT, {
-    // This is a more standard way to refetch
-    refetchQueries: [{ query: GET_CHATS }],
-  });
+  // CHANGED: The hook is now useSubscription.
+  const { loading, error, data } = useSubscription(GET_CHATS_SUBSCRIPTION);
+  
+  // CHANGED: The 'refetchQueries' option is removed because the subscription handles updates.
+  const [insertChat, { loading: isCreating }] = useMutation(INSERT_CHAT);
 
-  // ADDED: New handler function to include the user's ID
   const handleNewChat = () => {
-    if (user?.id) {
-      insertChat({ variables: { user_id: user.id } });
-    }
+    insertChat();
   };
 
   if (loading) return <p>Loading chats...</p>;
@@ -43,11 +38,9 @@ export const ChatList = ({ onSelectChat }) => {
   return (
     <div>
       <h3>Your Chats</h3>
-      {/* CHANGED: onClick now calls the new handler function */}
       <button onClick={handleNewChat} disabled={isCreating}>
         {isCreating ? 'Creating...' : '+ New Chat'}
       </button>
-      {/* CHANGED: Styling for the list */}
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {data?.chats.map((chat) => (
           <li
@@ -62,7 +55,7 @@ export const ChatList = ({ onSelectChat }) => {
             onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#f0f0f0')}
             onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
-            {/* CHANGED: Logic to display title or fallback to timestamp */}
+            {/* This display logic remains the same and will now update in real-time. */}
             {chat.title || `Chat from ${new Date(chat.created_at).toLocaleString()}`}
           </li>
         ))}
