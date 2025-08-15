@@ -61,7 +61,10 @@ export const MessageView = ({ chatId }) => {
     if (!currentMessage || isBotReplying || !chatId) return;
 
     setMessage(''); // Clear input immediately
-
+    console.log("Preparing to send mutation with these variables:", {
+    chat_id: chatId,
+    content: currentMessage
+  });
     try {
       // Save the user's message
       await insertUserMessage({
@@ -113,7 +116,8 @@ export const MessageView = ({ chatId }) => {
                 padding: '8px 12px',
                 borderRadius: '15px',
                 display: 'inline-block',
-                maxWidth: '70%'
+                maxWidth: '70%',
+                whiteSpace: 'pre-wrap'
               }}
             >
               {msg.content}
