@@ -79,6 +79,7 @@ export const MessageView = ({ chatId }) => {
         }
       });
     } catch (err) {
+      console.log(chatId, currentMessage);
       console.error("Transaction failed:", err);
       setMessage(currentMessage); // Restore message if failed
     }
