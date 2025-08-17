@@ -1,153 +1,157 @@
-import { useState, useEffect, useRef } from 'react';
-import { gql, useSubscription, useMutation } from '@apollo/client';
+// src/MessageView.js
 
+import React, { useState, useEffect, useRef } from 'react';
+import { gql, useSubscription, useMutation, useQuery } from '@apollo/client';
+import { MessageBubble } from './MessageBubble';
+
+// --- MUI IMPORTS ---
+import { Box, IconButton, CircularProgress, InputBase, Paper } from '@mui/material';
+import { styled, keyframes } from '@mui/material/styles';
+import SendIcon from '@mui/icons-material/Send';
+
+// --- GRAPHQL ---
+const GET_CHAT_TITLE = gql`
+  query GetChatTitle($id: uuid!) {
+    chats_by_pk(id: $id) {
+      id
+      title
+    }
+  }
+`;
 const GET_MESSAGES_SUBSCRIPTION = gql`
   subscription GetMessages($chat_id: uuid!) {
-    messages(
-      where: { chat_id: { _eq: $chat_id } }
-      order_by: { created_at: asc }
-    ) {
-      id
-      content
-      role
+    messages(where: { chat_id: { _eq: $chat_id } }, order_by: { created_at: asc }) {
+      id, content, role, created_at
     }
   }
 `;
-
 const INSERT_USER_MESSAGE = gql`
   mutation InsertUserMessage($chat_id: uuid!, $content: String!) {
-    insert_messages_one(
-      object: { chat_id: $chat_id, role: "user", content: $content }
-    ) {
-      id
-    }
+    insert_messages_one(object: { chat_id: $chat_id, role: "user", content: $content }) { id }
   }
 `;
-
 const SEND_MESSAGE_ACTION = gql`
   mutation SendMessageAction($chat_id: uuid!, $content: String!) {
-    sendMessage(message: { chat_id: $chat_id, content: $content }) {
-      reply
-    }
+    sendMessage(message: { chat_id: $chat_id, content: $content }) { reply }
   }
 `;
 
-export const MessageView = ({ chatId }) => {
+// --- THEMED TYPING INDICATOR ---
+const bounce = keyframes`
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+`;
+const TypingDot = styled(Box)(({ theme }) => ({
+  width: '8px',
+  height: '8px',
+  backgroundColor: theme.palette.text.secondary,
+  borderRadius: '50%',
+  margin: '0 3px',
+  animation: `${bounce} 1.2s infinite ease-in-out`,
+}));
+const TypingIndicator = () => (
+  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, ml: '58px' }}>
+    <TypingDot />
+    <TypingDot sx={{ animationDelay: '-0.2s' }} />
+    <TypingDot sx={{ animationDelay: '-0.4s' }} />
+  </Box>
+);
+
+// --- MAIN COMPONENT ---
+export const MessageView = ({ chatId, onTitleChange }) => {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef(null);
 
-  // Subscription (skips if no chatId yet)
-  const { data, loading, error } = useSubscription(GET_MESSAGES_SUBSCRIPTION, {
-    variables: { chat_id: chatId },
-    skip: !chatId
-  });
+  const { data: chatData } = useQuery(GET_CHAT_TITLE, { variables: { id: chatId } });
+  const chatTitle = chatData?.chats_by_pk?.title || "New Conversation";
 
+  useEffect(() => {
+    onTitleChange(chatTitle);
+    return () => onTitleChange('AI Assistant'); 
+  }, [chatTitle, onTitleChange]);
+
+  const { data, loading, error } = useSubscription(GET_MESSAGES_SUBSCRIPTION, { variables: { chat_id: chatId } });
   const [insertUserMessage] = useMutation(INSERT_USER_MESSAGE);
   const [sendMessageAction, { loading: isBotReplying }] = useMutation(SEND_MESSAGE_ACTION);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  useEffect(() => {
-    if (data) {
-      scrollToBottom();
-    }
-  }, [data]);
+  useEffect(scrollToBottom, [data, isBotReplying]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const currentMessage = message.trim();
     if (!currentMessage || isBotReplying || !chatId) return;
-
-    setMessage(''); // Clear input immediately
-    console.log("Preparing to send mutation with these variables:", {
-    chat_id: chatId,
-    content: currentMessage
-  });
+    setMessage('');
     try {
-      // Save the user's message
-      await insertUserMessage({
-        variables: {
-          chat_id: chatId,
-          content: currentMessage
-        }
-      });
-
-      // Trigger bot's reply
-      await sendMessageAction({
-        variables: {
-          chat_id: chatId,
-          content: currentMessage
-        }
-      });
+      await insertUserMessage({ variables: { chat_id: chatId, content: currentMessage } });
+      await sendMessageAction({ variables: { chat_id: chatId, content: currentMessage } });
     } catch (err) {
-      console.log(chatId, currentMessage);
-      console.error("Transaction failed:", err);
-      setMessage(currentMessage); // Restore message if failed
+      console.error('Transaction failed:', err);
+      setMessage(currentMessage);
     }
   };
 
-  if (!chatId) return null; // nothing to render without ID
-  if (loading) return <p>Loading messages...</p>;
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  if (loading) return <Box sx={{ m: 'auto' }}><CircularProgress color="inherit" /></Box>;
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '80vh' }}>
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          marginBottom: '10px',
-          border: '1px solid #ccc',
-          padding: '10px'
-        }}
-      >
+    // --- THIS IS THE KEY CHANGE ---
+    // This Box now uses absolute positioning to fill its parent container from the dashboard.
+    // This is the core of the final, robust layout fix.
+    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
+      
+      {/* --- THE SCROLLING AREA --- */}
+      {/* This Box now correctly takes up all remaining space and provides the scroll. */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ flexGrow: 1 }} />
         {data?.messages.map((msg) => (
-          <p
-            key={msg.id}
-            style={{ textAlign: msg.role === 'user' ? 'right' : 'left' }}
-          >
-            <span
-              style={{
-                backgroundColor:
-                  msg.role === 'user' ? '#007bff' : '#e9e9eb',
-                color: msg.role === 'user' ? 'white' : 'black',
-                padding: '8px 12px',
-                borderRadius: '15px',
-                display: 'inline-block',
-                maxWidth: '70%',
-                whiteSpace: 'pre-wrap'
-              }}
-            >
-              {msg.content}
-            </span>
-          </p>
+          <MessageBubble key={msg.id} msg={msg} />
         ))}
-        {isBotReplying && (
-          <p style={{ textAlign: 'left' }}>
-            <i>Bot is typing...</i>
-          </p>
-        )}
+        {isBotReplying && <TypingIndicator />}
         <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex' }}>
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message..."
-          disabled={isBotReplying}
-          style={{ flex: 1, padding: '10px' }}
-        />
-        <button
-          type="submit"
-          disabled={isBotReplying}
-          style={{ padding: '10px' }}
+      </Box>
+
+      {/* --- THE INPUT FORM --- */}
+      {/* This is a non-scrolling part of the flex layout. */}
+      <Box sx={{ px: 3, pb: 3, flexShrink: 0 }}>
+        <Paper 
+          component="form" 
+          elevation={0}
+          onSubmit={handleSubmit} 
+          sx={{ 
+            p: '4px 8px', 
+            display: 'flex', 
+            alignItems: 'center',
+            borderRadius: '12px', 
+            bgcolor: 'background.paper',
+            border: '1px solid', 
+            borderColor: 'divider',
+          }}
         >
-          Send
-        </button>
-      </form>
-    </div>
+          <InputBase
+            sx={{ ml: 1, flex: 1, color: 'text.primary' }}
+            placeholder="Message your AI Assistant..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isBotReplying}
+            multiline
+            maxRows={5}
+          />
+          <IconButton type="submit" color="inherit" disabled={!message.trim() || isBotReplying}>
+            <SendIcon />
+          </IconButton>
+        </Paper>
+      </Box>
+    </Box>
   );
 };

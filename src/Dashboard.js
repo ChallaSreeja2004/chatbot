@@ -1,65 +1,74 @@
-import { useState } from 'react';
-import { useSignOut, useUserData } from '@nhost/react';
+// src/Dashboard.js
+
+import React, { useState, useContext } from 'react';
 import { ChatList } from './ChatList';
 import { MessageView } from './MessageView';
+import { WelcomeScreen } from './WelcomeScreen';
+import { ThemeContext } from './App';
+
+// --- MUI IMPORTS ---
+import { Box, Typography, Divider, IconButton, useTheme } from '@mui/material';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 export const Dashboard = () => {
-  const { signOut } = useSignOut();
-  const user = useUserData();
   const [selectedChatId, setSelectedChatId] = useState(null);
+  const [activeChatTitle, setActiveChatTitle] = useState('AI Assistant');
 
-  const handleSelectChat = (chatId) => {
-    if (chatId) {
-      setSelectedChatId(String(chatId)); // ensure always string
-    }
-  };
+  const { toggleTheme } = useContext(ThemeContext);
+  const theme = useTheme();
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        width: '80vw',
-        margin: 'auto'
-      }}
-    >
-      <header
-        style={{
+    <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      
+      <Box
+        sx={{
+          width: { xs: '280px', md: '320px' },
+          flexShrink: 0,
+          bgcolor: 'background.paper', 
+          borderRight: '1px solid',
+          borderColor: 'divider',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '10px'
+          flexDirection: 'column',
         }}
       >
-        <h2>Dashboard</h2>
-        <div>
-          <span>Welcome, {user?.email}!</span>
-          <button onClick={signOut} style={{ marginLeft: '10px' }}>
-            Sign Out
-          </button>
-        </div>
-      </header>
-      <hr />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <div
-          style={{
-            flex: '0 0 300px',
-            borderRight: '1px solid #ccc',
-            paddingRight: '10px',
-            overflowY: 'auto'
-          }}
-        >
-          <ChatList onSelectChat={handleSelectChat} />
-        </div>
-        <div style={{ flex: 1, paddingLeft: '10px' }}>
-          {selectedChatId && typeof selectedChatId === 'string' ? (
-            <MessageView chatId={selectedChatId} />
+        <ChatList onSelectChat={setSelectedChatId} selectedChatId={selectedChatId} />
+      </Box>
+
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+            {activeChatTitle}
+          </Typography>
+          {/* Using SettingsIcon as per your last screenshot reference */}
+          <IconButton title="Settings">
+            <SettingsIcon />
+          </IconButton>
+        </Box>
+        <Divider sx={{ flexShrink: 0 }} />
+        
+        {/* --- THIS IS THE CRITICAL FIX --- */}
+        {/* We add flexbox centering properties to this container. */}
+        <Box sx={{ 
+            flexGrow: 1, 
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+          {selectedChatId ? (
+            <MessageView 
+              chatId={selectedChatId} 
+              key={selectedChatId} 
+              onTitleChange={(title) => setActiveChatTitle(title)}
+            />
           ) : (
-            <h3>Select a chat to start messaging</h3>
+            <WelcomeScreen />
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };

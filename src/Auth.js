@@ -1,34 +1,333 @@
 // src/Auth.js
-import { useState } from 'react';
-import { useSignUpEmailPassword, useSignInEmailPassword } from '@nhost/react';
+
+import React, { useState, useContext } from 'react';
+import {
+  useSignUpEmailPassword,
+  useSignInEmailPassword,
+  useProviderLink
+} from '@nhost/react';
+import { ThemeContext } from './App';
+
+// --- MUI IMPORTS ---
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Link,
+  Alert,
+  CircularProgress,
+  Divider,
+  IconButton,
+  useTheme,
+  InputAdornment
+} from '@mui/material';
+import { keyframes } from '@emotion/react';
+
+// --- MUI ICONS ---
+import GoogleIcon from '@mui/icons-material/Google';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { TbMessageChatbot } from 'react-icons/tb';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 export const Auth = () => {
+  const { signUpEmailPassword, isLoading, isSuccess, isError, error } =
+    useSignUpEmailPassword();
+  const { toggleTheme } = useContext(ThemeContext);
+  const theme = useTheme();
+
+  if (isSuccess) {
+    return <CheckEmailScreen />;
+  }
+
+  return (
+    <Box>
+      <IconButton
+        onClick={toggleTheme}
+        sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
+      >
+        {theme.palette.mode === 'dark' ? (
+          <Brightness7Icon />
+        ) : (
+          <Brightness4Icon />
+        )}
+      </IconButton>
+      <AuthForm
+        onSignUp={signUpEmailPassword}
+        isSigningUp={isLoading}
+        signUpError={isError ? error : null}
+      />
+    </Box>
+  );
+};
+
+const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
+  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const { signUpEmailPassword, isLoading: isSigningUp, error: signUpError } = useSignUpEmailPassword();
-  const { signInEmailPassword, isLoading: isSigningIn, error: signInError } = useSignInEmailPassword();
+  const {
+    signInEmailPassword,
+    isLoading: isSigningIn,
+    error: signInError
+  } = useSignInEmailPassword();
+  const providerUrls = useProviderLink();
 
-  const handleAuth = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (e.nativeEvent.submitter.innerText === "Sign In") {
-      signInEmailPassword(email, password);
+    if (isSignUpMode) {
+      onSignUp(email, password, { redirectTo: window.location.origin });
     } else {
-      signUpEmailPassword(email, password);
+      signInEmailPassword(email, password);
     }
   };
 
+  const isLoading = isSigningIn || isSigningUp;
+
   return (
-    <div>
-      <h2>My Secure Chatbot</h2>
-      <form onSubmit={handleAuth}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit" disabled={isSigningIn}>Sign In</button>
-        <button type="submit" disabled={isSigningUp}>Sign Up</button>
-      </form>
-      {signInError && <p style={{ color: 'red' }}>{signInError.message}</p>}
-      {signUpError && <p style={{ color: 'red' }}>{signUpError.message}</p>}
-    </div>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        p: 2
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          maxWidth: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1.5
+            }}
+          >
+            <Box
+              sx={{
+                fontSize: '2.5rem',
+                color: 'text.primary',
+                display: 'flex'
+              }}
+            >
+              <TbMessageChatbot />
+            </Box>
+            <Typography component="h1" variant="h4" sx={{ fontWeight: 'bold' }}>
+              ChatBot
+            </Typography>
+          </Box>
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            {isSignUpMode
+              ? 'Create an account to get started.'
+              : 'Welcome back! Please sign in.'}
+          </Typography>
+        </Box>
+
+        <Paper
+          elevation={0}
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            p: 4,
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            animation: `${fadeIn} 0.7s ease-out`,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            borderRadius: 3
+          }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<GoogleIcon />}
+            href={providerUrls.google}
+            sx={{ borderColor: 'divider' }}
+          >
+            Continue with Google
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<GitHubIcon />}
+            href={providerUrls.github}
+            sx={{ borderColor: 'divider' }}
+          >
+            Continue with Github
+          </Button>
+          <Divider>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              or
+            </Typography>
+          </Divider>
+
+          <TextField
+            label="E-mail"
+            variant="filled"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            fullWidth
+          />
+
+          <TextField
+  label="Password"
+  variant="filled"
+  type={showPassword ? 'text' : 'password'}
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  required
+  fullWidth
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          aria-label="toggle password visibility"
+          onClick={() => setShowPassword(!showPassword)}
+          onMouseDown={(e) => e.preventDefault()}
+          edge="end"
+        >
+          {showPassword ? <VisibilityOff /> : <Visibility />}
+        </IconButton>
+      </InputAdornment>
+    )
+  }}
+  sx={{
+    '& input[type=password]::-ms-reveal, & input[type=password]::-ms-clear': {
+      display: 'none'
+    },
+    '& input[type=password]::-webkit-credentials-auto-fill-button, & input[type=password]::-webkit-password-toggle': {
+      display: 'none'
+    }
+  }}
+/>
+
+
+          {signInError && !isSignUpMode && (
+            <Alert severity="error">{signInError.message}</Alert>
+          )}
+          {signUpError && isSignUpMode && (
+            <Alert severity="error">{signUpError.message}</Alert>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            disabled={isLoading}
+            sx={{ mt: 1, py: 1.5 }}
+          >
+            {isLoading ? (
+              <CircularProgress size={26} color="inherit" />
+            ) : isSignUpMode ? (
+              'Create Account'
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+          <Typography
+            sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}
+          >
+            {isSignUpMode
+              ? 'Already have an account? '
+              : "Don't have an account? "}
+            <Link
+              component="button"
+              type="button"
+              onClick={() => setIsSignUpMode(!isSignUpMode)}
+              sx={{ fontWeight: 'bold' }}
+            >
+              {isSignUpMode ? 'Sign In' : 'Create an account'}
+            </Link>
+          </Typography>
+        </Paper>
+      </Box>
+    </Box>
+  );
+};
+
+// The CheckEmailScreen component is complete and correct.
+const CheckEmailScreen = () => {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        p: 2
+      }}
+    >
+      <Box sx={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            bgcolor: 'background.paper',
+            p: 1.5,
+            borderRadius: '50%',
+            border: '1px solid',
+            borderColor: 'divider',
+            zIndex: 1,
+            display: 'flex'
+          }}
+        >
+          <MarkEmailReadIcon sx={{ color: 'text.secondary' }} />
+        </Box>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            textAlign: 'center',
+            animation: `${fadeIn} 0.5s ease-out`,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            mt: 5
+          }}
+        >
+          <Box sx={{ textAlign: 'center', mb: 1, pt: 2 }}>
+            <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
+              Check Your Email
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              We've sent a verification link to your email. Please click the
+              link to complete the signup process.
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            onClick={() => window.location.reload()}
+            fullWidth
+          >
+            Back to Sign In
+          </Button>
+        </Paper>
+      </Box>
+    </Box>
   );
 };

@@ -1,86 +1,18 @@
 // src/index.js
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { NhostProvider, useAuthenticationStatus } from '@nhost/react';
-import {
-  ApolloProvider,
-  ApolloClient,
-  createHttpLink,
-  InMemoryCache,
-  split
-} from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
-import { getMainDefinition } from '@apollo/client/utilities';
-import { WebSocketLink } from '@apollo/client/link/ws';
-
+import { NhostProvider } from '@nhost/react';
 import { nhost } from './nhost';
-import App from './App';
-
-const Main = () => {
-  // This hook ensures we don't render the app until Nhost auth is ready
-  const { isLoading } = useAuthenticationStatus();
-
-  if (isLoading) {
-    return <div>Loading authentication...</div>;
-  }
-
-  // Set up Apollo Client *after* we know the auth state is loaded
-  const authLink = setContext((_, { headers }) => {
-    const accessToken = nhost.auth.getAccessToken();
-    return {
-      headers: {
-        ...headers,
-        authorization: accessToken ? `Bearer ${accessToken}` : ''
-      }
-    };
-  });
-
-  const httpLink = createHttpLink({
-    uri: nhost.graphql.httpUrl
-  });
-
-  const wsLink = new WebSocketLink({
-    uri: nhost.graphql.wsUrl,
-    options: {
-      reconnect: true,
-      lazy: true,
-      connectionParams: () => ({
-        headers: {
-          Authorization: `Bearer ${nhost.auth.getAccessToken()}`
-        }
-      })
-    }
-  });
-
-  const splitLink = split(
-    ({ query }) => {
-      const definition = getMainDefinition(query);
-      return (
-        definition.kind === 'OperationDefinition' &&
-        definition.operation === 'subscription'
-      );
-    },
-    wsLink,
-    authLink.concat(httpLink)
-  );
-
-  const apolloClient = new ApolloClient({
-    link: splitLink,
-    cache: new InMemoryCache()
-  });
-
-  return (
-    <ApolloProvider client={apolloClient}>
-      <App />
-    </ApolloProvider>
-  );
-};
+import App from './App'; // We will render App directly
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <NhostProvider nhost={nhost}>
-      <Main />
+      {/* App is now the top-level component inside NhostProvider */}
+      {/* It will handle ALL other logic, including theming and Apollo */}
+      <App />
     </NhostProvider>
   </React.StrictMode>
 );
