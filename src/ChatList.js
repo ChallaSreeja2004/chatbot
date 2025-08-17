@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
-import SettingsIcon from '@mui/icons-material/Settings'; // The new icon
 import { TbMessageChatbot } from 'react-icons/tb';
 
 // --- GRAPHQL ---
