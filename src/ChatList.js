@@ -46,7 +46,7 @@ export const ChatList = ({ onSelectChat, selectedChatId }) => {
   const [insertChat, { loading: isCreating }] = useMutation(INSERT_CHAT);
   const { signOut } = useSignOut();
   const user = useUserData();
-  const theme = useTheme();
+  // const theme = useTheme();
 
   if (error) {
     return <Box sx={{ p: 2 }}><Typography color="error">Error loading chats.</Typography></Box>;
