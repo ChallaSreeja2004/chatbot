@@ -7,16 +7,16 @@ import { WelcomeScreen } from './WelcomeScreen';
 import { ThemeContext } from './App';
 
 // --- MUI IMPORTS ---
-import { Box, Typography, Divider, IconButton, useTheme } from '@mui/material';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { Box, Typography, Divider, IconButton } from '@mui/material';
+// import Brightness4Icon from '@mui/icons-material/Brightness4';
+// import Brightness7Icon from '@mui/icons-material/Brightness7';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 export const Dashboard = () => {
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [activeChatTitle, setActiveChatTitle] = useState('AI Assistant');
 
-  const { toggleTheme } = useContext(ThemeContext);
+  // const { toggleTheme } = useContext(ThemeContext);
   
 
   return (
