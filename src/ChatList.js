@@ -17,7 +17,7 @@ import {
   Divider,
   IconButton,
   Avatar,
-  useTheme
+  
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
