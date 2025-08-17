@@ -1,10 +1,10 @@
 // src/Dashboard.js
 
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { ChatList } from './ChatList';
 import { MessageView } from './MessageView';
 import { WelcomeScreen } from './WelcomeScreen';
-import { ThemeContext } from './App';
+// import { ThemeContext } from './App';
 
 // --- MUI IMPORTS ---
 import { Box, Typography, Divider, IconButton } from '@mui/material';
