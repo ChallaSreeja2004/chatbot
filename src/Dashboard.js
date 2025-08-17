@@ -17,7 +17,7 @@ export const Dashboard = () => {
   const [activeChatTitle, setActiveChatTitle] = useState('AI Assistant');
 
   const { toggleTheme } = useContext(ThemeContext);
-  const theme = useTheme();
+  
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
