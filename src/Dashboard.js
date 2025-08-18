@@ -1,6 +1,7 @@
 // src/Dashboard.js
 
 import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ChatList } from './ChatList';
 import { MessageView } from './MessageView';
 import { WelcomeScreen } from './WelcomeScreen';

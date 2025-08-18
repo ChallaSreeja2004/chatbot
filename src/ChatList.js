@@ -17,11 +17,10 @@ import {
   Divider,
   IconButton,
   Avatar,
-  useTheme
+  
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
-import SettingsIcon from '@mui/icons-material/Settings'; // The new icon
 import { TbMessageChatbot } from 'react-icons/tb';
 
 // --- GRAPHQL ---
@@ -47,7 +46,7 @@ export const ChatList = ({ onSelectChat, selectedChatId }) => {
   const [insertChat, { loading: isCreating }] = useMutation(INSERT_CHAT);
   const { signOut } = useSignOut();
   const user = useUserData();
-  const theme = useTheme();
+  // const theme = useTheme();
 
   if (error) {
     return <Box sx={{ p: 2 }}><Typography color="error">Error loading chats.</Typography></Box>;
