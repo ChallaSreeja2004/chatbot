@@ -1,34 +1,43 @@
 // src/WelcomeScreen.js
+
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, IconButton, useTheme, useMediaQuery } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import { TbMessageChatbot } from 'react-icons/tb';
 
-// --- 1. CHANGE THE IMPORT ---
-// We now import `TbMessageChatbot` from the "tb" (Tabler Icons) section of the library.
-import { TbMessageChatbot } from "react-icons/tb";
+export const WelcomeScreen = ({ 
+  onMenuClick, // For mobile
+  onToggleDrawer = () => {}, // For desktop
+  isDrawerOpen = false // For desktop
+}) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-export const WelcomeScreen = () => {
   return (
-    <Box 
-      sx={{ 
-        m: 'auto', 
-        textAlign: 'center', 
-        color: 'text.secondary',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 2,
-      }}
-    >
-      <Box sx={{ fontSize: '3.5rem', color: 'text.primary', display: 'flex' }}>
-      <TbMessageChatbot />
-    </Box>
+    <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 3 }}>
       
-      <Typography variant="h5" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
-        Welcome to your AI Assistant
+      {/* This header is only for the menu button */}
+      <Box sx={{ position: 'absolute', top: 0, left: 0, p: 2, display: 'flex', alignItems: 'center' }}>
+        {isMobile && (
+          <IconButton onClick={onMenuClick}>
+            <MenuIcon />
+          </IconButton>
+        )}
+        {!isMobile && !isDrawerOpen && (
+          <IconButton onClick={onToggleDrawer}>
+            <MenuIcon />
+          </IconButton>
+        )}
+      </Box>
+
+      <Box sx={{ fontSize: '3rem', color: 'text.secondary', mb: 2 }}>
+        <TbMessageChatbot />
+      </Box>
+      <Typography variant="h5" component="h1" gutterBottom>
+        AI Assistant
       </Typography>
-      
-      <Typography>
-        Select a conversation from the sidebar or start a new one to begin.
+      <Typography color="text.secondary">
+        Select a conversation or start a new one to begin.
       </Typography>
     </Box>
   );

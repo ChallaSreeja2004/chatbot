@@ -1,6 +1,6 @@
 // src/ChatList.js
 
-import React from 'react'; // No longer need useContext
+import React from 'react';
 import { gql, useSubscription, useMutation } from '@apollo/client';
 import { useSignOut, useUserData } from '@nhost/react';
 
@@ -17,10 +17,12 @@ import {
   Divider,
   IconButton,
   Avatar,
-  
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { TbMessageChatbot } from 'react-icons/tb';
 
 // --- GRAPHQL ---
@@ -41,12 +43,13 @@ const INSERT_CHAT = gql`
   }
 `;
 
-export const ChatList = ({ onSelectChat, selectedChatId }) => {
+export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
   const { loading, error, data } = useSubscription(GET_CHATS_SUBSCRIPTION);
   const [insertChat, { loading: isCreating }] = useMutation(INSERT_CHAT);
   const { signOut } = useSignOut();
   const user = useUserData();
-  // const theme = useTheme();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   if (error) {
     return <Box sx={{ p: 2 }}><Typography color="error">Error loading chats.</Typography></Box>;
@@ -55,14 +58,27 @@ export const ChatList = ({ onSelectChat, selectedChatId }) => {
   const getInitials = (email = '') => email.substring(0, 2).toUpperCase();
 
   return (
-    <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ 
+      p: { xs: 1, md: 1.5 }, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100%', 
+      overflow: 'hidden' 
+    }}>
       
-      <Box sx={{ p: 1, display: 'flex', alignItems: 'center', mb: 1.5, flexShrink: 0 }}>
-<Box sx={{ fontSize: '1.75rem', color: 'text.secondary', display: 'flex', mr:1.5 }}>
-      <TbMessageChatbot />
-    </Box>        <Typography variant="h6">
+      <Box sx={{ p: 1, display: 'flex', alignItems: 'center', mb: { xs: 1, md: 1.5 }, flexShrink: 0 }}>
+        <Box sx={{ fontSize: '1.75rem', color: 'text.secondary', display: 'flex', mr:1.5 }}>
+          <TbMessageChatbot />
+        </Box>        
+        <Typography variant="h6">
           Chatbot
         </Typography>
+        
+        {!isMobile && (
+          <IconButton onClick={onToggleDrawer} sx={{ ml: 'auto' }}>
+            <ChevronLeftIcon />
+          </IconButton>
+        )}
       </Box>
 
       <Button
@@ -71,7 +87,12 @@ export const ChatList = ({ onSelectChat, selectedChatId }) => {
         startIcon={<AddIcon />}
         onClick={() => insertChat()}
         disabled={isCreating}
-        sx={{ mb: 2, py: 1.25, borderColor: 'divider', color: 'text.primary' }}
+        sx={{ 
+          mb: { xs: 1.5, md: 2 }, 
+          py: { xs: 1, md: 1.25 }, 
+          borderColor: 'divider', 
+          color: 'text.primary' 
+        }}
       >
         New Chat
       </Button>
@@ -98,7 +119,7 @@ export const ChatList = ({ onSelectChat, selectedChatId }) => {
                       bgcolor: 'primary.main',
                       color: 'primary.contrastText',
                       '& .MuiListItemText-secondary': {
-                        color: 'primary.contrastText', // Also apply to secondary text
+                        color: 'primary.contrastText',
                         opacity: 0.7,
                       },
                       '&:hover': {

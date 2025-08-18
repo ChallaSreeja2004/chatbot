@@ -1,17 +1,14 @@
 // src/MessageView.js
 
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { gql, useSubscription, useMutation, useQuery } from '@apollo/client';
 import { MessageBubble } from './MessageBubble';
-import { ThemeContext } from './App';
 
 // --- MUI IMPORTS ---
 import { Box, IconButton, CircularProgress, InputBase, Paper, Typography, Divider, useTheme, useMediaQuery } from '@mui/material';
 import { styled, keyframes } from '@mui/material/styles';
 import SendIcon from '@mui/icons-material/Send';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import MenuIcon from '@mui/icons-material/Menu';
 
 // --- GRAPHQL ---
 const GET_CHAT_TITLE = gql`
@@ -62,11 +59,14 @@ const TypingIndicator = () => (
 );
 
 // --- MAIN COMPONENT ---
-export const MessageView = ({ chatId, onGoBack }) => {
+export const MessageView = ({ 
+  chatId, 
+  onMenuClick,
+  onToggleDrawer = () => {},
+  isDrawerOpen = false 
+}) => {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef(null);
-
-  const { toggleTheme } = useContext(ThemeContext);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -109,22 +109,37 @@ export const MessageView = ({ chatId, onGoBack }) => {
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <Box sx={{ 
+        p: { xs: 1.5, md: 2 }, 
+        display: 'flex', 
+        alignItems: 'center', 
+        flexShrink: 0 
+      }}>
         {isMobile && (
-          <IconButton onClick={onGoBack} sx={{ mr: 1 }}>
-            <ArrowBackIcon />
+          <IconButton onClick={onMenuClick} sx={{ mr: 1 }}>
+            <MenuIcon />
           </IconButton>
         )}
+        
+        {!isMobile && !isDrawerOpen && (
+          <IconButton onClick={onToggleDrawer} sx={{ mr: 1 }}>
+            <MenuIcon />
+          </IconButton>
+        )}
+
         <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }} noWrap>
           {chatTitle}
         </Typography>
-        <IconButton onClick={toggleTheme} title="Toggle theme">
-          {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-        </IconButton>
       </Box>
       <Divider />
 
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ 
+        flexGrow: 1, 
+        overflowY: 'auto', 
+        p: { xs: 1.5, md: 3 }, 
+        display: 'flex', 
+        flexDirection: 'column' 
+      }}>
         <Box sx={{ flexGrow: 1 }} />
         {data?.messages.map((msg) => (
           <MessageBubble key={msg.id} msg={msg} />
@@ -133,7 +148,11 @@ export const MessageView = ({ chatId, onGoBack }) => {
         <div ref={messagesEndRef} />
       </Box>
 
-      <Box sx={{ px: 3, pb: 3, flexShrink: 0 }}>
+      <Box sx={{ 
+        px: { xs: 1.5, md: 3 }, 
+        pb: { xs: 1.5, md: 3 }, 
+        flexShrink: 0 
+      }}>
         <Paper 
           component="form" 
           elevation={0}

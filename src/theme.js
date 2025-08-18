@@ -1,6 +1,6 @@
 // src/theme.js
 
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles'; // <-- Import responsiveFontSizes
 
 export const getTheme = (mode) => {
   const sharedSettings = {
@@ -36,28 +36,24 @@ export const getTheme = (mode) => {
         }
       },
       MuiInputLabel: {
-  styleOverrides: {
-    root: {
-      '&.Mui-focused': {
-        color: mode === 'dark' ? '#F9FAFB' : '#1F2937', // or use theme.palette.text.primary
+        styleOverrides: {
+          root: {
+            '&.Mui-focused': {
+              color: mode === 'dark' ? '#F9FAFB' : '#1F2937',
+            },
+          },
+        },
       },
-    },
-  },
-},
-      // --- THIS IS THE CRITICAL FIX FOR THE BLUE COLOR ---
       MuiFilledInput: {
         styleOverrides: {
           root: {
-            // Remove the default underline which can hold the primary color
             '&:before, &:after': {
               display: 'none',
             },
-            // Set a subtle background color
             backgroundColor: mode === 'dark' ? 'rgba(0, 0, 0, 0.15)' : 'rgba(0, 0, 0, 0.06)',
             '&:hover': {
               backgroundColor: mode === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.09)',
             },
-            // On focus, use the same subtle background color, NOT the theme's primary color
             '&.Mui-focused': {
               backgroundColor: mode === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.09)', boxShadow: 'none',
             },
@@ -67,8 +63,10 @@ export const getTheme = (mode) => {
     },
   };
 
+  let theme; // <-- Declare theme variable
+
   if (mode === 'dark') {
-    return createTheme({
+    theme = createTheme({ // <-- Assign to theme
       ...sharedSettings,
       palette: {
         mode: 'dark',
@@ -80,7 +78,7 @@ export const getTheme = (mode) => {
       },
     });
   } else {
-    return createTheme({
+    theme = createTheme({ // <-- Assign to theme
       ...sharedSettings,
       palette: {
         mode: 'light',
@@ -92,4 +90,8 @@ export const getTheme = (mode) => {
       },
     });
   }
+
+  // --- THIS IS THE CRITICAL CHANGE ---
+  // It takes the theme and makes all font sizes responsive.
+  return responsiveFontSizes(theme);
 };

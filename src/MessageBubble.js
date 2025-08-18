@@ -22,13 +22,11 @@ export const MessageBubble = ({ msg }) => {
         flexDirection: isUser ? 'row-reverse' : 'row',
         alignItems: 'flex-start',
         gap: 1.5,
-        mb: 2,
+        mb: { xs: 1.5, md: 2 },
       }}
     >
       {isUser ? (
         <Avatar sx={{ 
-          // --- 1. THIS IS THE KEY CHANGE ---
-          // The user's avatar now uses the new accent color.
           bgcolor: 'accent.main',
           color: 'accent.contrastText',
           width: 40, 
@@ -56,11 +54,9 @@ export const MessageBubble = ({ msg }) => {
       <Paper
         elevation={0}
         sx={{
-          p: '12px 16px',
+          p: { xs: '10px 14px', md: '12px 16px' },
           maxWidth: '80%',
           position: 'relative',
-          // --- 2. THIS IS THE KEY CHANGE ---
-          // The user's bubble now uses the new accent color.
           bgcolor: isUser ? 'accent.main' : botBubbleStyle.bgcolor,
           color: isUser ? 'accent.contrastText' : botBubbleStyle.color,
           border: isUser ? 'none' : botBubbleStyle.border,
@@ -81,8 +77,6 @@ export const MessageBubble = ({ msg }) => {
             position: 'absolute',
             bottom: 8,
             right: 14,
-            // --- 3. THIS IS THE KEY CHANGE ---
-            // The timestamp now correctly uses the accent color's contrast text.
             color: isUser ? theme.palette.accent.contrastText : theme.palette.text.secondary,
             opacity: isUser ? 0.7 : 1,
             fontSize: '0.7rem',
@@ -93,4 +87,4 @@ export const MessageBubble = ({ msg }) => {
       </Paper>
     </Box>
   );
-};
+}

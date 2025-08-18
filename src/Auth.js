@@ -25,12 +25,11 @@ import {
 } from '@mui/material';
 import { keyframes } from '@emotion/react';
 
-// --- MUI ICONS ---
+// --- ICONS ---
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { Sun, Moon } from 'react-feather';
 import { TbMessageChatbot } from 'react-icons/tb';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -43,39 +42,52 @@ const fadeIn = keyframes`
 export const Auth = () => {
   const { signUpEmailPassword, isLoading, isSuccess, isError, error } =
     useSignUpEmailPassword();
-  const { toggleTheme } = useContext(ThemeContext);
-  const theme = useTheme();
-
+  
   if (isSuccess) {
     return <CheckEmailScreen />;
   }
 
   return (
-    <Box>
-      <IconButton
-        onClick={toggleTheme}
-        sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
-      >
-        {theme.palette.mode === 'dark' ? (
-          <Brightness7Icon />
-        ) : (
-          <Brightness4Icon />
-        )}
-      </IconButton>
+    <AuthLayout>
       <AuthForm
         onSignUp={signUpEmailPassword}
         isSigningUp={isLoading}
         signUpError={isError ? error : null}
       />
+    </AuthLayout>
+  );
+};
+
+// Layout component to avoid repeating the theme toggle
+const AuthLayout = ({ children }) => {
+  const { toggleTheme } = useContext(ThemeContext);
+  const theme = useTheme();
+  return (
+    <Box>
+      <IconButton 
+        onClick={toggleTheme} 
+        title="Toggle theme"
+        sx={{ 
+          position: 'absolute', 
+          top: 16, 
+          right: 16,
+          zIndex: 1
+        }}
+      >
+        {theme.palette.mode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}      
+      </IconButton>
+      {children}
     </Box>
   );
 };
+
 
 const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const theme = useTheme(); // <-- Get the theme
 
   const {
     signInEmailPassword,
@@ -157,7 +169,11 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
             border: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.paper',
-            borderRadius: 3
+            borderRadius: 3,
+            // --- THIS IS THE CRITICAL CHANGE ---
+            boxShadow: theme.palette.mode === 'light' 
+              ? '0px 4px 20px rgba(0, 0, 0, 0.05)' 
+              : 'none'
           }}
         >
           <Button
@@ -193,36 +209,28 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
           />
 
           <TextField
-  label="Password"
-  variant="filled"
-  type={showPassword ? 'text' : 'password'}
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  required
-  fullWidth
-  InputProps={{
-    endAdornment: (
-      <InputAdornment position="end">
-        <IconButton
-          aria-label="toggle password visibility"
-          onClick={() => setShowPassword(!showPassword)}
-          onMouseDown={(e) => e.preventDefault()}
-          edge="end"
-        >
-          {showPassword ? <VisibilityOff /> : <Visibility />}
-        </IconButton>
-      </InputAdornment>
-    )
-  }}
-  sx={{
-    '& input[type=password]::-ms-reveal, & input[type=password]::-ms-clear': {
-      display: 'none'
-    },
-    '& input[type=password]::-webkit-credentials-auto-fill-button, & input[type=password]::-webkit-password-toggle': {
-      display: 'none'
-    }
-  }}
-/>
+            label="Password"
+            variant="filled"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
 
 
           {signInError && !isSignUpMode && (
@@ -268,66 +276,73 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
   );
 };
 
-// The CheckEmailScreen component is complete and correct.
+
 const CheckEmailScreen = () => {
+  const theme = useTheme(); // <-- Get the theme
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        p: 2
-      }}
-    >
-      <Box sx={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'background.paper',
-            p: 1.5,
-            borderRadius: '50%',
-            border: '1px solid',
-            borderColor: 'divider',
-            zIndex: 1,
-            display: 'flex'
-          }}
-        >
-          <MarkEmailReadIcon sx={{ color: 'text.secondary' }} />
-        </Box>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            animation: `${fadeIn} 0.5s ease-out`,
-            border: '1px solid',
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            mt: 5
-          }}
-        >
-          <Box sx={{ textAlign: 'center', mb: 1, pt: 2 }}>
-            <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
-              Check Your Email
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-              We've sent a verification link to your email. Please click the
-              link to complete the signup process.
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            onClick={() => window.location.reload()}
-            fullWidth
+    <AuthLayout>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          p: 2
+        }}
+      >
+        <Box sx={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              bgcolor: 'background.paper',
+              p: 1.5,
+              borderRadius: '50%',
+              border: '1px solid',
+              borderColor: 'divider',
+              zIndex: 1,
+              display: 'flex'
+            }}
           >
-            Back to Sign In
-          </Button>
-        </Paper>
+            <MarkEmailReadIcon sx={{ color: 'text.secondary' }} />
+          </Box>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              textAlign: 'center',
+              animation: `${fadeIn} 0.5s ease-out`,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+              mt: 5,
+              // --- THIS IS THE CRITICAL CHANGE ---
+              boxShadow: theme.palette.mode === 'light' 
+                ? '0px 4px 20px rgba(0, 0, 0, 0.05)' 
+                : 'none'
+            }}
+          >
+            <Box sx={{ textAlign: 'center', mb: 1, pt: 2 }}>
+              <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
+                Check Your Email
+              </Typography>
+              <Typography color="text.secondary" sx={{ mb: 3 }}>
+                We've sent a verification link to your email. Please click the
+                link to complete the signup process.
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              onClick={() => window.location.reload()}
+              fullWidth
+            >
+              Back to Sign In
+            </Button>
+          </Paper>
+        </Box>
       </Box>
-    </Box>
+    </AuthLayout>
   );
 };

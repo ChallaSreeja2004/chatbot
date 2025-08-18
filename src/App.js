@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, createContext } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
-import { getTheme } from './theme'; // Your "Carbon & Quartz" theme
+import { getTheme } from './theme';
 
 // --- NHOST & APOLLO IMPORTS ---
 import { useAuthenticationStatus } from '@nhost/react';
@@ -22,7 +22,6 @@ import { Dashboard } from './Dashboard';
 export const ThemeContext = createContext({ toggleTheme: () => {} });
 
 // --- APOLLO CLIENT SETUP ---
-// This logic is now correctly placed inside App.js
 const getApolloClient = () => {
   const authLink = setContext((_, { headers }) => {
     const accessToken = nhost.auth.getAccessToken();
@@ -70,6 +69,24 @@ const AppContent = () => {
   return <Auth />;
 };
 
+// --- STYLES FOR THE SCROLLBAR ---
+const scrollbarStyles = (theme) => ({
+  '::-webkit-scrollbar': {
+    width: '8px',
+    height: '8px',
+  },
+  '::-webkit-scrollbar-track': {
+    backgroundColor: 'transparent',
+  },
+  '::-webkit-scrollbar-thumb': {
+    backgroundColor: theme.palette.divider,
+    borderRadius: '4px',
+    '&:hover': {
+      backgroundColor: theme.palette.text.secondary,
+    },
+  },
+});
+
 function App() {
   const [mode, setMode] = useState('dark');
   const themeToggler = {
@@ -81,7 +98,7 @@ function App() {
     <ThemeContext.Provider value={themeToggler}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <GlobalStyles styles={{ /* Your custom scrollbar styles here */ }} />
+        <GlobalStyles styles={scrollbarStyles(theme)} />
         <AppContent />
       </ThemeProvider>
     </ThemeContext.Provider>
