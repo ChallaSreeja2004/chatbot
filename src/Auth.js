@@ -208,6 +208,7 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
             fullWidth
           />
 
+
           <TextField
             label="Password"
             variant="filled"
@@ -229,6 +230,21 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
                   </IconButton>
                 </InputAdornment>
               )
+            }}
+            sx={{
+              // Hide the native "eye" icon on Microsoft Edge
+              '& input::-ms-reveal': {
+                display: 'none',
+              },
+              // Hide the native "eye" icon on Chrome and other WebKit browsers
+              '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                WebkitAppearance: 'none',
+                margin: 0,
+              },
+              // A more modern selector to hide the autofill icon in Chrome
+              '& input::-webkit-password-toggle-button': {
+                display: 'none',
+              },
             }}
           />
 

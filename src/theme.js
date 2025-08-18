@@ -1,8 +1,28 @@
 // src/theme.js
 
-import { createTheme, responsiveFontSizes } from '@mui/material/styles'; // <-- Import responsiveFontSizes
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
 export const getTheme = (mode) => {
+  // Define palette colors first so they can be reused
+  const palettes = {
+    dark: {
+      primary: { main: '#E5E7EB', contrastText: '#1F2937' },
+      accent: { main: '#64748B', contrastText: '#FFFFFF' },
+      background: { default: '#111827', paper: '#1F2937' },
+      text: { primary: '#F9FAFB', secondary: '#9CA3AF' },
+      divider: '#374151',
+    },
+    light: {
+      primary: { main: '#1F2937', contrastText: '#FFFFFF' },
+      accent: { main: '#1F2937', contrastText: '#FFFFFF' },
+      background: { default: '#F9FAFB', paper: '#FFFFFF' },
+      text: { primary: '#1F2937', secondary: '#6B7280' },
+      divider: '#E5E7EB',
+    }
+  };
+
+  const currentPalette = palettes[mode];
+
   const sharedSettings = {
     typography: {
       fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -39,7 +59,7 @@ export const getTheme = (mode) => {
         styleOverrides: {
           root: {
             '&.Mui-focused': {
-              color: mode === 'dark' ? '#F9FAFB' : '#1F2937',
+              color: currentPalette.text.primary,
             },
           },
         },
@@ -58,40 +78,21 @@ export const getTheme = (mode) => {
               backgroundColor: mode === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.09)', boxShadow: 'none',
             },
           },
+          
         },
       },
     },
   };
+  
+  let theme = createTheme({
+    ...sharedSettings,
+    palette: {
+      mode,
+      ...currentPalette
+    },
+  });
+  
+  theme = responsiveFontSizes(theme);
 
-  let theme; // <-- Declare theme variable
-
-  if (mode === 'dark') {
-    theme = createTheme({ // <-- Assign to theme
-      ...sharedSettings,
-      palette: {
-        mode: 'dark',
-        primary: { main: '#E5E7EB', contrastText: '#1F2937' },
-        accent: { main: '#64748B', contrastText: '#FFFFFF' },
-        background: { default: '#111827', paper: '#1F2937' },
-        text: { primary: '#F9FAFB', secondary: '#9CA3AF' },
-        divider: '#374151',
-      },
-    });
-  } else {
-    theme = createTheme({ // <-- Assign to theme
-      ...sharedSettings,
-      palette: {
-        mode: 'light',
-        primary: { main: '#1F2937', contrastText: '#FFFFFF' },
-        accent: { main: '#1F2937', contrastText: '#FFFFFF' },
-        background: { default: '#F9FAFB', paper: '#FFFFFF' },
-        text: { primary: '#1F2937', secondary: '#6B7280' },
-        divider: '#E5E7EB',
-      },
-    });
-  }
-
-  // --- THIS IS THE CRITICAL CHANGE ---
-  // It takes the theme and makes all font sizes responsive.
-  return responsiveFontSizes(theme);
+  return theme;
 };

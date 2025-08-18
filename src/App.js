@@ -69,8 +69,7 @@ const AppContent = () => {
   return <Auth />;
 };
 
-// --- STYLES FOR THE SCROLLBAR ---
-const scrollbarStyles = (theme) => ({
+const globalStyles = (theme) => ({
   '::-webkit-scrollbar': {
     width: '8px',
     height: '8px',
@@ -85,8 +84,23 @@ const scrollbarStyles = (theme) => ({
       backgroundColor: theme.palette.text.secondary,
     },
   },
+  // --- THE DEFINITIVE AUTOFILL FIX ---
+  'input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active': {
+    // 1. Use the box-shadow trick to cover the background
+    WebkitBoxShadow: `0 0 0 30px ${theme.palette.background.paper} inset !important`,
+    
+    // 2. Force the text color to match the theme
+    WebkitTextFillColor: `${theme.palette.text.primary} !important`,
+    
+    // 3. Force a very long transition to delay the browser's style changes
+    transition: 'background-color 5000s ease-in-out 0s !important',
+    
+    // 4. Ensure the caret color also matches the theme
+    caretColor: `${theme.palette.text.primary} !important`,
+    
+    borderRadius: 'inherit',
+  },
 });
-
 function App() {
   const [mode, setMode] = useState('dark');
   const themeToggler = {
@@ -98,7 +112,7 @@ function App() {
     <ThemeContext.Provider value={themeToggler}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <GlobalStyles styles={scrollbarStyles(theme)} />
+        <GlobalStyles styles={globalStyles(theme)} />
         <AppContent />
       </ThemeProvider>
     </ThemeContext.Provider>

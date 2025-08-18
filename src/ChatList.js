@@ -1,6 +1,6 @@
 // src/ChatList.js
 
-import React from 'react';
+import React, { useState } from 'react';
 import { gql, useSubscription, useMutation } from '@apollo/client';
 import { useSignOut, useUserData } from '@nhost/react';
 
@@ -18,11 +18,19 @@ import {
   IconButton,
   Avatar,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { TbMessageChatbot } from 'react-icons/tb';
 
 // --- GRAPHQL ---
@@ -42,14 +50,71 @@ const INSERT_CHAT = gql`
     }
   }
 `;
+const DELETE_CHAT = gql`
+  mutation DeleteChat($id: uuid!) {
+    delete_chats_by_pk(id: $id) {
+      id
+    }
+  }
+`;
 
 export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
   const { loading, error, data } = useSubscription(GET_CHATS_SUBSCRIPTION);
   const [insertChat, { loading: isCreating }] = useMutation(INSERT_CHAT);
+  const [deleteChat] = useMutation(DELETE_CHAT);
   const { signOut } = useSignOut();
   const user = useUserData();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuChatId, setMenuChatId] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState(null);
+
+  const handleMenuOpen = (event, chatId) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+    setMenuChatId(chatId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuChatId(null);
+  };
+
+  const handleDeleteClick = () => {
+    setChatToDelete(menuChatId);
+    setDialogOpen(true);
+    handleMenuClose();
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setChatToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (chatToDelete) {
+      if (chatToDelete === selectedChatId) {
+        onSelectChat(null);
+      }
+      await deleteChat({ variables: { id: chatToDelete } });
+    }
+    handleDialogClose();
+  };
+
+  const handleNewChat = async () => {
+    try {
+      const result = await insertChat();
+      const newChatId = result.data.insert_chats_one.id;
+      if (newChatId) {
+        onSelectChat(newChatId);
+      }
+    } catch (err) {
+      console.error("Error creating new chat:", err);
+    }
+  };
 
   if (error) {
     return <Box sx={{ p: 2 }}><Typography color="error">Error loading chats.</Typography></Box>;
@@ -66,26 +131,39 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
       overflow: 'hidden' 
     }}>
       
-      <Box sx={{ p: 1, display: 'flex', alignItems: 'center', mb: { xs: 1, md: 1.5 }, flexShrink: 0 }}>
+      <Box 
+        onClick={() => onSelectChat(null)} // 1. Add the onClick handler
+        sx={{ 
+          p: 1, 
+          display: 'flex', 
+          alignItems: 'center', 
+          mb: { xs: 1, md: 1.5 }, 
+          flexShrink: 0,
+          cursor: 'pointer', // 2. Change cursor to show it's clickable
+          '&:hover': { // 3. (Optional) Add a nice hover effect
+            bgcolor: 'action.hover',
+            borderRadius: 2
+          }
+        }}
+      >
         <Box sx={{ fontSize: '1.75rem', color: 'text.secondary', display: 'flex', mr:1.5 }}>
           <TbMessageChatbot />
         </Box>        
-        <Typography variant="h6">
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Chatbot
         </Typography>
         
         {!isMobile && (
-          <IconButton onClick={onToggleDrawer} sx={{ ml: 'auto' }}>
+          <IconButton onClick={(e) => { e.stopPropagation(); onToggleDrawer(); }}>
             <ChevronLeftIcon />
           </IconButton>
         )}
       </Box>
-
       <Button
         fullWidth
         variant="outlined"
         startIcon={<AddIcon />}
-        onClick={() => insertChat()}
+        onClick={handleNewChat}
         disabled={isCreating}
         sx={{ 
           mb: { xs: 1.5, md: 2 }, 
@@ -112,19 +190,12 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
                   onClick={() => onSelectChat(chat.id)}
                   sx={{
                     borderRadius: 2,
-                    '&:hover': {
-                      bgcolor: 'action.hover',
-                    },
+                    '&:hover': { bgcolor: 'action.hover' },
                     '&.Mui-selected': {
                       bgcolor: 'primary.main',
                       color: 'primary.contrastText',
-                      '& .MuiListItemText-secondary': {
-                        color: 'primary.contrastText',
-                        opacity: 0.7,
-                      },
-                      '&:hover': {
-                        bgcolor: 'primary.main',
-                      }
+                      '& .MuiListItemText-secondary': { color: 'primary.contrastText', opacity: 0.7 },
+                      '&:hover': { bgcolor: 'primary.main' }
                     },
                   }}
                 >
@@ -135,6 +206,17 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
                     }}
                     secondary={new Date(chat.created_at).toLocaleDateString()}
                   />
+                  <IconButton
+                    aria-label="chat options"
+                    onClick={(e) => handleMenuOpen(e, chat.id)}
+                    sx={{
+                      ml: 1,
+                      color: chat.id === selectedChatId ? 'primary.contrastText' : 'inherit',
+                      opacity: 0.7
+                    }}
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
                 </ListItemButton>
               </ListItem>
             ))
@@ -157,6 +239,32 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
           </IconButton>
         </Box>
       </Box>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+      >
+        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>Delete Chat</MenuItem>
+      </Menu>
+
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+      >
+        <DialogTitle>Delete Conversation?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this conversation? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
