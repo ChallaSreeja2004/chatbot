@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { gql, useSubscription, useMutation } from '@apollo/client';
 import { useSignOut, useUserData } from '@nhost/react';
+import { SettingsModal } from './SettingsModal';
 
 // --- MUI IMPORTS ---
 import {
@@ -31,6 +32,7 @@ import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { TbMessageChatbot } from 'react-icons/tb';
 
 // --- GRAPHQL ---
@@ -71,6 +73,8 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
   const [menuChatId, setMenuChatId] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [chatToDelete, setChatToDelete] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
 
   const handleMenuOpen = (event, chatId) => {
     event.stopPropagation();
@@ -115,6 +119,21 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
       console.error("Error creating new chat:", err);
     }
   };
+  
+  const handleUserMenuOpen = (event) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
+  };
+  const handleSettingsClick = () => {
+    setSettingsOpen(true);
+    handleUserMenuClose();
+  };
+  const handleSignOutClick = () => {
+    signOut();
+    handleUserMenuClose();
+  };
 
   if (error) {
     return <Box sx={{ p: 2 }}><Typography color="error">Error loading chats.</Typography></Box>;
@@ -132,15 +151,15 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
     }}>
       
       <Box 
-        onClick={() => onSelectChat(null)} // 1. Add the onClick handler
+        onClick={() => onSelectChat(null)}
         sx={{ 
           p: 1, 
           display: 'flex', 
           alignItems: 'center', 
           mb: { xs: 1, md: 1.5 }, 
           flexShrink: 0,
-          cursor: 'pointer', // 2. Change cursor to show it's clickable
-          '&:hover': { // 3. (Optional) Add a nice hover effect
+          cursor: 'pointer',
+          '&:hover': {
             bgcolor: 'action.hover',
             borderRadius: 2
           }
@@ -159,6 +178,7 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
           </IconButton>
         )}
       </Box>
+
       <Button
         fullWidth
         variant="outlined"
@@ -226,19 +246,44 @@ export const ChatList = ({ onSelectChat, selectedChatId, onToggleDrawer }) => {
 
       <Box sx={{ mt: 'auto', flexShrink: 0 }}>
         <Divider sx={{ my: 1 }} />
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1 }}>
+        <Box 
+          onClick={handleUserMenuOpen}
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            p: 1, 
+            cursor: 'pointer',
+            borderRadius: 2,
+            '&:hover': { bgcolor: 'action.hover' }
+          }}
+        >
           <Avatar sx={{ width: 32, height: 32, mr: 1.5, fontSize: '0.875rem', bgcolor: 'background.default', color: 'text.primary' }}>
             {getInitials(user?.email)}
           </Avatar>
           <Typography noWrap sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {user?.displayName || user?.email}
           </Typography>
-          
-          <IconButton onClick={() => signOut()} title="Sign Out">
-            <LogoutIcon />
-          </IconButton>
         </Box>
       </Box>
+
+      <Menu
+        anchorEl={userMenuAnchorEl}
+        open={Boolean(userMenuAnchorEl)}
+        onClose={handleUserMenuClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleSettingsClick}>
+          <SettingsIcon sx={{ mr: 1.5, fontSize: '1.25rem' }} />
+          Change Password
+        </MenuItem>
+        <MenuItem onClick={handleSignOutClick}>
+          <LogoutIcon sx={{ mr: 1.5, fontSize: '1.25rem' }} />
+          Sign Out
+        </MenuItem>
+      </Menu>
+      
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <Menu
         anchorEl={anchorEl}
