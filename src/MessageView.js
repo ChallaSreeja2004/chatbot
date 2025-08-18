@@ -1,13 +1,17 @@
 // src/MessageView.js
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { gql, useSubscription, useMutation, useQuery } from '@apollo/client';
 import { MessageBubble } from './MessageBubble';
+import { ThemeContext } from './App';
 
 // --- MUI IMPORTS ---
-import { Box, IconButton, CircularProgress, InputBase, Paper } from '@mui/material';
+import { Box, IconButton, CircularProgress, InputBase, Paper, Typography, Divider, useTheme, useMediaQuery } from '@mui/material';
 import { styled, keyframes } from '@mui/material/styles';
 import SendIcon from '@mui/icons-material/Send';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // --- GRAPHQL ---
 const GET_CHAT_TITLE = gql`
@@ -58,17 +62,16 @@ const TypingIndicator = () => (
 );
 
 // --- MAIN COMPONENT ---
-export const MessageView = ({ chatId, onTitleChange }) => {
+export const MessageView = ({ chatId, onGoBack }) => {
   const [message, setMessage] = useState('');
   const messagesEndRef = useRef(null);
 
+  const { toggleTheme } = useContext(ThemeContext);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const { data: chatData } = useQuery(GET_CHAT_TITLE, { variables: { id: chatId } });
   const chatTitle = chatData?.chats_by_pk?.title || "New Conversation";
-
-  useEffect(() => {
-    onTitleChange(chatTitle);
-    return () => onTitleChange('AI Assistant'); 
-  }, [chatTitle, onTitleChange]);
 
   const { data, loading, error } = useSubscription(GET_MESSAGES_SUBSCRIPTION, { variables: { chat_id: chatId } });
   const [insertUserMessage] = useMutation(INSERT_USER_MESSAGE);
@@ -104,13 +107,23 @@ export const MessageView = ({ chatId, onTitleChange }) => {
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    // --- THIS IS THE KEY CHANGE ---
-    // This Box now uses absolute positioning to fill its parent container from the dashboard.
-    // This is the core of the final, robust layout fix.
-    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       
-      {/* --- THE SCROLLING AREA --- */}
-      {/* This Box now correctly takes up all remaining space and provides the scroll. */}
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+        {isMobile && (
+          <IconButton onClick={onGoBack} sx={{ mr: 1 }}>
+            <ArrowBackIcon />
+          </IconButton>
+        )}
+        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 'bold' }} noWrap>
+          {chatTitle}
+        </Typography>
+        <IconButton onClick={toggleTheme} title="Toggle theme">
+          {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+        </IconButton>
+      </Box>
+      <Divider />
+
       <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3, display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ flexGrow: 1 }} />
         {data?.messages.map((msg) => (
@@ -120,21 +133,15 @@ export const MessageView = ({ chatId, onTitleChange }) => {
         <div ref={messagesEndRef} />
       </Box>
 
-      {/* --- THE INPUT FORM --- */}
-      {/* This is a non-scrolling part of the flex layout. */}
       <Box sx={{ px: 3, pb: 3, flexShrink: 0 }}>
         <Paper 
           component="form" 
           elevation={0}
           onSubmit={handleSubmit} 
           sx={{ 
-            p: '4px 8px', 
-            display: 'flex', 
-            alignItems: 'center',
-            borderRadius: '12px', 
-            bgcolor: 'background.paper',
-            border: '1px solid', 
-            borderColor: 'divider',
+            p: '4px 8px', display: 'flex', alignItems: 'center',
+            borderRadius: '12px', bgcolor: 'background.paper',
+            border: '1px solid', borderColor: 'divider',
           }}
         >
           <InputBase

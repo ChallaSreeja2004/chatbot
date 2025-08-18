@@ -62,7 +62,7 @@ export const ChatList = ({ onSelectChat, selectedChatId }) => {
 <Box sx={{ fontSize: '1.75rem', color: 'text.secondary', display: 'flex', mr:1.5 }}>
       <TbMessageChatbot />
     </Box>        <Typography variant="h6">
-          AI Assistant
+          Chatbot
         </Typography>
       </Box>
 
