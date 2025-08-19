@@ -40,10 +40,10 @@ const fadeIn = keyframes`
 `;
 
 export const Auth = () => {
-  const { signUpEmailPassword, isLoading, isSuccess, isError, error } =
-    useSignUpEmailPassword();
+  const [showCheckEmail, setShowCheckEmail] = useState(false);
+  const { signUpEmailPassword, isLoading, isError, error } = useSignUpEmailPassword();
   
-  if (isSuccess) {
+  if (showCheckEmail) {
     return <CheckEmailScreen />;
   }
 
@@ -53,6 +53,7 @@ export const Auth = () => {
         onSignUp={signUpEmailPassword}
         isSigningUp={isLoading}
         signUpError={isError ? error : null}
+        onSignUpSuccess={() => setShowCheckEmail(true)}
       />
     </AuthLayout>
   );
@@ -82,12 +83,12 @@ const AuthLayout = ({ children }) => {
 };
 
 
-const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
+const AuthForm = ({ onSignUp, isSigningUp, signUpError, onSignUpSuccess }) => {
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const theme = useTheme(); // <-- Get the theme
+  const theme = useTheme();
 
   const {
     signInEmailPassword,
@@ -96,10 +97,13 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
   } = useSignInEmailPassword();
   const providerUrls = useProviderLink();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSignUpMode) {
-      onSignUp(email, password, { redirectTo: window.location.origin });
+      const result = await onSignUp(email, password, { redirectTo: window.location.origin });
+      if (result.isSuccess) {
+        onSignUpSuccess();
+      }
     } else {
       signInEmailPassword(email, password);
     }
@@ -127,21 +131,8 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
         }}
       >
         <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1.5
-            }}
-          >
-            <Box
-              sx={{
-                fontSize: '2.5rem',
-                color: 'text.primary',
-                display: 'flex'
-              }}
-            >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }} >
+            <Box sx={{ fontSize: '2.5rem', color: 'text.primary', display: 'flex' }} >
               <TbMessageChatbot />
             </Box>
             <Typography component="h1" variant="h4" sx={{ fontWeight: 'bold' }}>
@@ -170,26 +161,15 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
             borderColor: 'divider',
             bgcolor: 'background.paper',
             borderRadius: 3,
-            // --- THIS IS THE CRITICAL CHANGE ---
             boxShadow: theme.palette.mode === 'light' 
               ? '0px 4px 20px rgba(0, 0, 0, 0.05)' 
               : 'none'
           }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            href={providerUrls.google}
-            sx={{ borderColor: 'divider' }}
-          >
+          <Button variant="outlined" startIcon={<GoogleIcon />} href={providerUrls.google} sx={{ borderColor: 'divider' }} >
             Continue with Google
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<GitHubIcon />}
-            href={providerUrls.github}
-            sx={{ borderColor: 'divider' }}
-          >
+          <Button variant="outlined" startIcon={<GitHubIcon />} href={providerUrls.github} sx={{ borderColor: 'divider' }} >
             Continue with Github
           </Button>
           <Divider>
@@ -198,16 +178,7 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
             </Typography>
           </Divider>
 
-          <TextField
-            label="E-mail"
-            variant="filled"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            fullWidth
-          />
-
+          <TextField label="E-mail" variant="filled" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required fullWidth />
 
           <TextField
             label="Password"
@@ -231,58 +202,16 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
                 </InputAdornment>
               )
             }}
-            sx={{
-              // Hide the native "eye" icon on Microsoft Edge
-              '& input::-ms-reveal': {
-                display: 'none',
-              },
-              // Hide the native "eye" icon on Chrome and other WebKit browsers
-              '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
-                WebkitAppearance: 'none',
-                margin: 0,
-              },
-              // A more modern selector to hide the autofill icon in Chrome
-              '& input::-webkit-password-toggle-button': {
-                display: 'none',
-              },
-            }}
           />
 
-
-          {signInError && !isSignUpMode && (
-            <Alert severity="error">{signInError.message}</Alert>
-          )}
-          {signUpError && isSignUpMode && (
-            <Alert severity="error">{signUpError.message}</Alert>
-          )}
-          <Button
-            type="submit"
-            variant="contained"
-            size="large"
-            fullWidth
-            disabled={isLoading}
-            sx={{ mt: 1, py: 1.5 }}
-          >
-            {isLoading ? (
-              <CircularProgress size={26} color="inherit" />
-            ) : isSignUpMode ? (
-              'Create Account'
-            ) : (
-              'Sign In'
-            )}
+          {signInError && !isSignUpMode && ( <Alert severity="error">{signInError.message}</Alert> )}
+          {signUpError && isSignUpMode && ( <Alert severity="error">{signUpError.message}</Alert> )}
+          <Button type="submit" variant="contained" size="large" fullWidth disabled={isLoading} sx={{ mt: 1, py: 1.5 }} >
+            {isLoading ? ( <CircularProgress size={26} color="inherit" /> ) : isSignUpMode ? ( 'Create Account' ) : ( 'Sign In' )}
           </Button>
-          <Typography
-            sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }}
-          >
-            {isSignUpMode
-              ? 'Already have an account? '
-              : "Don't have an account? "}
-            <Link
-              component="button"
-              type="button"
-              onClick={() => setIsSignUpMode(!isSignUpMode)}
-              sx={{ fontWeight: 'bold' }}
-            >
+          <Typography sx={{ textAlign: 'center', mt: 2, color: 'text.secondary' }} >
+            {isSignUpMode ? 'Already have an account? ' : "Don't have an account? "}
+            <Link component="button" type="button" onClick={() => setIsSignUpMode(!isSignUpMode)} sx={{ fontWeight: 'bold' }} >
               {isSignUpMode ? 'Sign In' : 'Create an account'}
             </Link>
           </Typography>
@@ -294,34 +223,12 @@ const AuthForm = ({ onSignUp, isSigningUp, signUpError }) => {
 
 
 const CheckEmailScreen = () => {
-  const theme = useTheme(); // <-- Get the theme
+  const theme = useTheme();
   return (
     <AuthLayout>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          p: 2
-        }}
-      >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', p: 2 }} >
         <Box sx={{ position: 'relative', width: '100%', maxWidth: '420px' }}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              bgcolor: 'background.paper',
-              p: 1.5,
-              borderRadius: '50%',
-              border: '1px solid',
-              borderColor: 'divider',
-              zIndex: 1,
-              display: 'flex'
-            }}
-          >
+          <Box sx={{ position: 'absolute', top: 0, left: '50%', transform: 'translate(-50%, -50%)', bgcolor: 'background.paper', p: 1.5, borderRadius: '50%', border: '1px solid', borderColor: 'divider', zIndex: 1, display: 'flex' }} >
             <MarkEmailReadIcon sx={{ color: 'text.secondary' }} />
           </Box>
           <Paper
@@ -334,7 +241,6 @@ const CheckEmailScreen = () => {
               borderColor: 'divider',
               bgcolor: 'background.paper',
               mt: 5,
-              // --- THIS IS THE CRITICAL CHANGE ---
               boxShadow: theme.palette.mode === 'light' 
                 ? '0px 4px 20px rgba(0, 0, 0, 0.05)' 
                 : 'none'
@@ -349,11 +255,7 @@ const CheckEmailScreen = () => {
                 link to complete the signup process.
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              onClick={() => window.location.reload()}
-              fullWidth
-            >
+            <Button variant="contained" onClick={() => window.location.reload()} fullWidth >
               Back to Sign In
             </Button>
           </Paper>
