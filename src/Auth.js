@@ -42,7 +42,7 @@ const fadeIn = keyframes`
 // --- KEY CHANGE: This component now correctly handles the entire flow ---
 export const Auth = () => {
   const [showCheckEmail, setShowCheckEmail] = useState(false);
-  const { signUpEmailPassword, isLoading, isError, error } = useSignUpEmailPassword();
+  const { signUpEmailPassword, isLoading} = useSignUpEmailPassword();
   
   if (showCheckEmail) {
     return <CheckEmailScreen />;
