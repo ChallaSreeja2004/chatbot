@@ -15,12 +15,22 @@ A fully responsive, real-time AI chatbot application built with a modern, secure
 ## 📸 Screenshots
 
 ### Desktop View
+<img width="1919" height="927" alt="login_desktopview" src="https://github.com/user-attachments/assets/14217ba7-77ff-4b3e-8d4e-5ec016b76094" />
+
 ![Desktop Screenshot](public\login_desktopview.png)
+<img width="1919" height="933" alt="home_desktopview" src="https://github.com/user-attachments/assets/58564be4-9867-46fd-b6b2-489a900e04cd" />
+
 ![Desktop home](public\home_desktopview.png)
+<img width="1919" height="928" alt="preview" src="https://github.com/user-attachments/assets/d21af3f3-8e7e-4cd5-9527-7fe407841510" />
+
 ![Desktop chat](public\preview.png)
 
 ### Mobile View
+<img width="401" height="800" alt="login_mobileview" src="https://github.com/user-attachments/assets/bc483449-225e-40eb-9c3a-d85b6bedec36" />
+
 ![Mobile Screenshot](pulic\login_mobileview.png)
+<img width="397" height="802" alt="home_mobileview" src="https://github.com/user-attachments/assets/0dcd71fb-5af1-4b42-a2c4-86f1b4f14447" />
+
 ![Mobile home](public\home_mobileview.png)
 
 
