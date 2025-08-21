@@ -2,8 +2,8 @@
 import { NhostClient } from '@nhost/react';
 
 const nhost = new NhostClient({
-  subdomain: 'fhexujvsxkslgwjmjyxm', // Your project subdomain
-  region: 'ap-south-1'              // Your project region
+  subdomain: process.env.REACT_APP_NHOST_SUBDOMAIN,
+  region: process.env.REACT_APP_NHOST_REGION
 });
 
 export { nhost };
